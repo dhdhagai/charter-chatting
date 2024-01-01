@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <title>Charter</title>
+  <style>
+    #chat-container {
+      height: 400px;
+      overflow-y: scroll;
+    }
+    p{
+      border-bottom: 1px solid grey;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container mt-5">
+  <div class="card">
+    <div class="card-header">
+      Charter
+    </div>
+    <div class="card-body" id="chat-container">
+
+    </div>
+    <div class="card-footer">
+      <form id="message-form">
+        <div class="input-group">
+          <input type="text" id="message-input" class="form-control" placeholder="Type your message..." required>
+          <div class="input-group-append">
+            <button class="btn btn-primary" id="send-btn">Send</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="socket.io/socket.io.js"></script>
+<script>
+  var socket = io.connect("http://localhost:8000")
+  const name = prompt("Please Enter Your Name to continue.")
+  const chatbox = document.getElementById("chat-container")
+  console.log(name)
+  if(name == ""){
+    alert("Please enter a valid name")
+    window.location.reload();
+  }else if (name){
+    socket.emit("name", name)
+  }else{
+    window.location.reload()
+  }
+  socket.on("join", (data) => {
+    const p = document.createElement("p")
+    p.innerText = "Server: " + data
+    chatbox.appendChild(p)
+  })
+  socket.on("prevmsg", (data) => {
+    data.forEach(msg => {
+      let p = document.createElement("p")
+      p.innerText = `${msg.time}   -   ${msg.nickname}: ${msg.message}`
+      chatbox.appendChild(p)
+    })
+  })
+  socket.on("messages", (data) => {
+    let p = document.createElement("p")
+      p.innerText = data
+      chatbox.appendChild(p)
+  })
+  document.getElementById("message-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+    if(document.getElementById("message-input").value !== "" || document.getElementById("message-input").value !== undefined){
+      socket.emit("messages", document.getElementById("message-input").value)
+      const p = document.createElement("p")
+      const timestamp = new Date().toLocaleTimeString();
+      p.innerText = timestamp+"  -  "+name +": "+ document.getElementById("message-input").value
+      chatbox.appendChild(p)
+      document.getElementById("message-input").value = "";
+    }
+  });
+</script>
+
+</body>
+</html>
